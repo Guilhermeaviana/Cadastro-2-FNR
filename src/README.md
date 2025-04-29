@@ -26,7 +26,6 @@ PARA organizar melhor o catálogo de produtos
 **Descrição:**
 COMO um usuário do sistema
 QUERO cadastrar produtos
-
 PARA manter um inventário atualizado dos itens disponíveis
 
 **Critérios de Aceite:**
