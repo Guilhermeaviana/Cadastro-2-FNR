@@ -1,17 +1,16 @@
 import React from 'react';
-import { Switch, Route} from 'react-router-dom';
-import Welcom from './page/Welcome';
-import Product from './page/Product';
-import Category from './page/Category';
+import { Route, Switch } from 'react-router-dom';
 
-export default function Routes(){
-    return(
-        <>
+import Welcom from './page/Welcome'; // <-- USA O SEU COMPONENTE EXISTENTE
+import Produtos from './page/Product';
+import Categorias from './page/Category';
+
+export default function Routes() {
+    return (
         <Switch>
-            <Route path="/" exact component={Welcom}/>
-            <Route path="/produto" component={Product}/>
-            <Route path="/categoria" component={Category}/>
+            <Route path="/" exact component={Welcom} /> {/* Rota principal aponta para Welcom */}
+            <Route path="/products" component={Produtos} />
+            <Route path="/categories" component={Categorias} />
         </Switch>
-        </>
-    )
+    );
 }

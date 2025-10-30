@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Card, Button, Form, Table } from "react-bootstrap";
-import { Link } from "react-router-dom";
+// Adicione Container à importação
+import { Card, Button, Form, Table, Container } from "react-bootstrap";
 import api from "../../services/api";
 import "./styles.css";
 
 export default function Category() {
+  // ... (todo o seu código de state e funções continua igual) ...
   const [categories, setCategories] = useState([]);
 
   const initialState = {
     id: null,
-    nome: "",
-    descricao: "",
+    name: "",
+    description: "",
   };
   const [data, setData] = useState(initialState);
 
@@ -30,37 +31,65 @@ export default function Category() {
 
   async function deleteCategory(id) {
     try {
-      await api.delete(`/categories/${id}`);
-      await loadCategories();
+      const response = await api.get(`/products?categoryId=${id}`);
+      if (response.data.length > 0) {
+        alert("Não é possível excluir esta categoria, pois existem produtos associados a ela.");
+        return;
+      }
+
+      if (window.confirm("Tem certeza que deseja excluir esta categoria?")) {
+        await api.delete(`/categories/${id}`);
+        alert("Categoria excluída com sucesso!");
+        await loadCategories();
+      }
     } catch (error) {
       console.error("Erro ao deletar categoria:", error);
       alert("Erro ao deletar categoria");
     }
   }
 
-  async function editCategory(id) {
+  function editCategory(id) {
     try {
       const category = categories.find((category) => category.id === id);
       if (category) {
         setData(category);
+        window.scrollTo(0, 0);
       }
     } catch (error) {
-      console.error("Erro ao carregar categoria:", error);
-      alert("Erro ao carregar categoria");
+      console.error("Erro ao carregar dados da categoria:", error);
+      alert("Erro ao carregar dados da categoria");
     }
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
 
+    if (!data.name || data.name.trim() === "") {
+        alert("O nome da categoria é obrigatório.");
+        return;
+    }
+
+    const isDuplicate = categories.some(
+      (category) => category.name.toLowerCase() === data.name.toLowerCase() && category.id !== data.id
+    );
+
+    if (isDuplicate) {
+      alert("Já existe uma categoria com este nome.");
+      return;
+    }
+
+    const postData = {
+      name: data.name,
+      description: data.description,
+    };
+
     try {
       if (data.id) {
-        await api.put(`/categories/${data.id}`, data);
+        await api.put(`/categories/${data.id}`, postData);
+        alert("Categoria atualizada com sucesso!");
       } else {
-        await api.post("/categories", {
-          nome: data.nome,
-          descricao: data.descricao
-        });
+        await api.post("/categories", postData);
+        alert("Categoria cadastrada com sucesso!");
       }
       setData(initialState);
       await loadCategories();
@@ -71,8 +100,10 @@ export default function Category() {
   }
 
   return (
-    <>
+    // Envolva tudo com o <Container>
+    <Container>
       <Form onSubmit={handleSubmit}>
+        {/* ... (o resto do seu JSX continua igual) ... */}
         <Card className="marg-botton">
           <Card.Header as="h5">CADASTRAR CATEGORIAS</Card.Header>
           <Card.Body>
@@ -80,11 +111,11 @@ export default function Category() {
               <Form.Group className="col-md-6">
                 <Form.Label>Nome*</Form.Label>
                 <Form.Control
-                  name="nome"
+                  name="name"
                   onChange={(e) => {
-                    setData({ ...data, nome: e.target.value });
+                    setData({ ...data, name: e.target.value });
                   }}
-                  value={data.nome}
+                  value={data.name}
                   placeholder="Informe o nome da categoria"
                   required
                 />
@@ -92,11 +123,11 @@ export default function Category() {
               <Form.Group className="col-md-6">
                 <Form.Label>Descrição</Form.Label>
                 <Form.Control
-                  name="descricao"
+                  name="description"
                   onChange={(e) => {
-                    setData({ ...data, descricao: e.target.value });
+                    setData({ ...data, description: e.target.value });
                   }}
-                  value={data.descricao}
+                  value={data.description}
                   placeholder="Informe a descrição da categoria"
                 />
               </Form.Group>
@@ -104,13 +135,18 @@ export default function Category() {
             <Button type="submit" variant="primary">
               {data.id ? "ATUALIZAR" : "SALVAR"}
             </Button>
+            {data.id && (
+                <Button variant="secondary" onClick={() => setData(initialState)} className="ml-2">
+                    CANCELAR EDIÇÃO
+                </Button>
+            )}
           </Card.Body>
         </Card>
       </Form>
       <Card>
         <Card.Header as="h5">LISTA DE CATEGORIAS</Card.Header>
         <Card.Body>
-          <Table>
+          <Table striped bordered hover responsive>
             <thead>
               <tr>
                 <th>ID</th>
@@ -123,11 +159,11 @@ export default function Category() {
               {categories.map((category) => (
                 <tr key={category.id}>
                   <td>{category.id}</td>
-                  <td>{category.nome}</td>
-                  <td>{category.descricao}</td>
+                  <td>{category.name}</td>
+                  <td>{category.description}</td>
                   <td>
                     <span className="just-icon">
-                      <Link onClick={() => editCategory(category.id)}>
+                      <Button variant="link" onClick={() => editCategory(category.id)}>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="16"
@@ -138,8 +174,8 @@ export default function Category() {
                         >
                           <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5L13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175l-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z" />
                         </svg>
-                      </Link>
-                      <Link onClick={() => deleteCategory(category.id)}>
+                      </Button>
+                      <Button variant="link" onClick={() => deleteCategory(category.id)}>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="16"
@@ -154,7 +190,7 @@ export default function Category() {
                             d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"
                           />
                         </svg>
-                      </Link>
+                      </Button>
                     </span>
                   </td>
                 </tr>
@@ -163,6 +199,6 @@ export default function Category() {
           </Table>
         </Card.Body>
       </Card>
-    </>
+    </Container>
   );
-} 
+}
